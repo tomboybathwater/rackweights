@@ -22,8 +22,7 @@ signal bar_crashed()
 var current_angle: float = 0.0
 var angular_velocity: float = 0.0
 var is_crashed: bool = false
-var last_nudge_direction: int = 0  # -1, 0, or 1
-var consecutive_nudges: int = 0  # How many times we've nudged in same direction
+var nudge_commitment: int = 0  # Negative = left commitment, Positive = right commitment
 
 ## Drift state
 var drift_direction: float = 0.0
@@ -111,24 +110,30 @@ func _update_rotation(delta: float) -> void:
 
 ## Player nudge input
 ## Player nudge input
+## Player nudge input
 func _nudge(direction: int) -> void:
-	# Track consecutive nudges in same direction
-	if direction == last_nudge_direction and last_nudge_direction != 0:
-		consecutive_nudges += 1
-	else:
-		consecutive_nudges = 0
-	last_nudge_direction = direction
+	# Update commitment based on direction
+	nudge_commitment += direction
 	
-	# Calculate amplified strength - each consecutive nudge is stronger
-	var amplification: float = pow(consecutive_nudge_amplifier, consecutive_nudges)
+	# Calculate amplified strength based on absolute commitment
+	# The more committed in ANY direction, the stronger nudges become in that direction
+	var commitment_strength: int = 0
+	
+	# If nudging in the direction we're already committed to, use full commitment
+	if sign(nudge_commitment) == direction or nudge_commitment == 0:
+		commitment_strength = abs(nudge_commitment)
+	# If nudging against our commitment, we're "peeling back" so use 0 (base strength)
+	else:
+		commitment_strength = 0
+	
+	var amplification: float = pow(consecutive_nudge_amplifier, commitment_strength)
 	var final_impulse: float = nudge_impulse * amplification
 	
 	# Apply impulse to angular velocity
 	angular_velocity += direction * final_impulse * get_process_delta_time()
 	
-	# Debug output to see the amplification
-	if consecutive_nudges > 0:
-		print("Consecutive nudges: ", consecutive_nudges, " | Amplification: ", amplification)
+	# Debug output
+	print("Commitment: ", nudge_commitment, " | Strength: ", commitment_strength, " | Amp: %.2f" % amplification)
 
 
 ## Checks if bar has exceeded crash threshold
@@ -150,7 +155,6 @@ func reset_bar() -> void:
 	angular_velocity = 0.0
 	is_crashed = false
 	pivot_point.rotation_degrees = 0.0
-	last_nudge_direction = 0
-	consecutive_nudges = 0
+	nudge_commitment = 0
 	_randomize_drift()
 	print("Bar reset")
