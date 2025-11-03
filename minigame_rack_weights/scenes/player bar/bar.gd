@@ -35,6 +35,8 @@ var drift_timer: float = 0.0
 var drift_change_interval: float = 1.5
 ## Pulse state
 var pulse_timer: float = 0.0
+var can_pulse: bool = true  ## Whether pulses are currently allowed
+## plate state
 var racked_plates_count: int = 0  ## Track number of plates (simulated for now)
 
 ## Node references
@@ -74,6 +76,10 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_accept"):  # Spacebar
 		racked_plates_count += 1
 		print("Added plate. Total: ", racked_plates_count)
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_B:
+		block_pulse()
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_N:
+		allow_pulse()
 
 ## Updates the random drift direction
 func _update_drift(delta: float) -> void:
@@ -155,8 +161,8 @@ func _nudge(direction: int) -> void:
 	print("Commitment: ", nudge_commitment, " | Strength: ", commitment_strength, " | Amp: %.2f" % amplification)
 	
 func _trigger_pulse() -> void:
-	# Only pulse when in the safe zone (not in gravity territory)
-	if abs(current_angle) < gravity_threshold:
+	# Only pulse when in the safe zone (not in gravity territory) and when its safe to pulse based on state
+	if can_pulse && abs(current_angle) < gravity_threshold:
 		# Random direction
 		var pulse_direction: float = 1.0 if randf() > 0.5 else -1.0
 		
@@ -174,6 +180,18 @@ func _trigger_pulse() -> void:
 	
 	# Reset timer for next pulse
 	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
+	
+
+## Block pulses (called by external signal, e.g., when plate is close)
+func block_pulse() -> void:
+	can_pulse = false
+	print("Pulses BLOCKED")
+
+
+## Allow pulses (called by external signal, e.g., when plate lands or misses)
+func allow_pulse() -> void:
+	can_pulse = true
+	print("Pulses ALLOWED")
 
 
 ## Checks if bar has exceeded crash threshold
@@ -197,5 +215,6 @@ func reset_bar() -> void:
 	pivot_point.rotation_degrees = 0.0
 	nudge_commitment = 0
 	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
+	can_pulse = true
 	_randomize_drift()
 	print("Bar reset")
