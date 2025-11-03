@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://j5tc5koc1vfn"]
+
+[ext_resource type="Texture2D" uid="uid://enw7cg54obci" path="res://minigame_rack_weights/assets/layout/rackweights_background.png" id="1_iqhsp"]
+[ext_resource type="PackedScene" uid="uid://cgxl7syiy8cvv" path="res://minigame_rack_weights/scenes/player bar/bar.tscn" id="2_iqhsp"]
+[ext_resource type="Texture2D" uid="uid://b4bqg328dcjnr" path="res://minigame_rack_weights/assets/layout/rackweights_foreground.png" id="3_fyv7m"]
+[ext_resource type="Script" uid="uid://ce1aupuxre70c" path="res://minigame_rack_weights/scenes/player bar/bar.gd" id="3_uplrv"]
+
+[node name="Mini_Game_RackWeights" type="Node2D"]
+
+[node name="background" type="Sprite2D" parent="."]
+texture = ExtResource("1_iqhsp")
+
+[node name="player_bar" parent="." instance=ExtResource("2_iqhsp")]
+position = Vector2(0, 405)
+script = ExtResource("3_uplrv")
+
+[node name="foreground" type="Sprite2D" parent="."]
+texture = ExtResource("3_fyv7m")
+
+[node name="Camera2D" type="Camera2D" parent="."]
