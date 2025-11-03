@@ -12,6 +12,11 @@ signal bar_crashed()
 @export var gravity_multiplier: float = 3.0
 @export var max_tilt_angle: float = 45.0
 @export var rotation_damping: float = 0.98
+@export var pulse_min_interval: float = 2.0  ## Minimum seconds between pulses
+@export var pulse_max_interval: float = 5.0  ## Maximum seconds between pulses
+@export var pulse_min_strength: float = 50.0  ## Minimum pulse force
+@export var pulse_max_strength: float = 150.0  ## Maximum pulse force
+@export var pulse_plate_multiplier: float = 1.3  ## Each plate increases pulse strength by 30%
 
 ## Exported tuning parameters - Player Control
 @export_group("Player Control")
@@ -28,6 +33,9 @@ var nudge_commitment: int = 0  # Negative = left commitment, Positive = right co
 var drift_direction: float = 0.0
 var drift_timer: float = 0.0
 var drift_change_interval: float = 1.5
+## Pulse state
+var pulse_timer: float = 0.0
+var racked_plates_count: int = 0  ## Track number of plates (simulated for now)
 
 ## Node references
 @onready var pivot_point: Marker2D = $PivotPoint
@@ -35,6 +43,7 @@ var drift_change_interval: float = 1.5
 
 func _ready() -> void:
 	_randomize_drift()
+	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
 
 
 func _process(delta: float) -> void:
@@ -42,6 +51,7 @@ func _process(delta: float) -> void:
 		return
 	
 	_update_drift(delta)
+	_update_pulse(delta)
 	_apply_physics(delta)
 	_update_rotation(delta)
 	_check_crash()
@@ -61,6 +71,9 @@ func _input(event: InputEvent) -> void:
 		_nudge(-1)
 	elif event.is_action_pressed("nudge_right"):
 		_nudge(1)
+	elif event.is_action_pressed("ui_accept"):  # Spacebar
+		racked_plates_count += 1
+		print("Added plate. Total: ", racked_plates_count)
 
 ## Updates the random drift direction
 func _update_drift(delta: float) -> void:
@@ -106,6 +119,12 @@ func _update_rotation(delta: float) -> void:
 	
 	# Emit signal for debugging/UI
 	tilt_angle_changed.emit(current_angle)
+	
+## Updates the pulse timer and triggers random pulses
+func _update_pulse(delta: float) -> void:
+	pulse_timer -= delta
+	if pulse_timer <= 0.0:
+		_trigger_pulse()
 
 
 ## Player nudge input
@@ -134,6 +153,27 @@ func _nudge(direction: int) -> void:
 	
 	# Debug output
 	print("Commitment: ", nudge_commitment, " | Strength: ", commitment_strength, " | Amp: %.2f" % amplification)
+	
+func _trigger_pulse() -> void:
+	# Only pulse when in the safe zone (not in gravity territory)
+	if abs(current_angle) < gravity_threshold:
+		# Random direction
+		var pulse_direction: float = 1.0 if randf() > 0.5 else -1.0
+		
+		# Random strength within range
+		var base_strength: float = randf_range(pulse_min_strength, pulse_max_strength)
+		
+		# Amplify by number of plates
+		var plate_amplification: float = pow(pulse_plate_multiplier, racked_plates_count)
+		var final_strength: float = base_strength * plate_amplification
+		
+		# Apply pulse to angular velocity
+		angular_velocity += pulse_direction * final_strength * get_process_delta_time()
+		
+		print("PULSE! Direction: ", pulse_direction, " | Strength: %.1f" % final_strength, " | Plates: ", racked_plates_count)
+	
+	# Reset timer for next pulse
+	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
 
 
 ## Checks if bar has exceeded crash threshold
@@ -156,5 +196,6 @@ func reset_bar() -> void:
 	is_crashed = false
 	pivot_point.rotation_degrees = 0.0
 	nudge_commitment = 0
+	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
 	_randomize_drift()
 	print("Bar reset")

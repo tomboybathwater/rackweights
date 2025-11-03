@@ -14,6 +14,8 @@ texture = ExtResource("2_lb45o")
 
 [node name="Bar" parent="." instance=ExtResource("2_pg5a5")]
 position = Vector2(310, 809)
+pulse_min_strength = 150.0
+pulse_max_strength = 250.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(310, 405)
