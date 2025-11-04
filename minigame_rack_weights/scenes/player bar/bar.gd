@@ -17,6 +17,8 @@ signal bar_crashed()
 @export var pulse_min_strength: float = 50.0  ## Minimum pulse force
 @export var pulse_max_strength: float = 150.0  ## Maximum pulse force
 @export var pulse_plate_multiplier: float = 1.3  ## Each plate increases pulse strength by 30%
+@export var chaos_multiplier_chance: float = 0.15  ## 15% chance for chaos multiplier
+@export var chaos_multiplier_range: Vector2 = Vector2(2.0, 5.0)  ## Random between 2x and 5x
 
 ## Exported tuning parameters - Player Control
 @export_group("Player Control")
@@ -152,7 +154,8 @@ func _nudge(direction: int) -> void:
 		commitment_strength = 0
 	
 	var amplification: float = pow(consecutive_nudge_amplifier, commitment_strength)
-	var final_impulse: float = nudge_impulse * amplification
+	var chaos_mult: float = _get_chaos_multiplier()
+	var final_impulse: float = nudge_impulse * amplification * chaos_mult
 	
 	# Apply impulse to angular velocity
 	angular_velocity += direction * final_impulse * get_process_delta_time()
@@ -171,7 +174,8 @@ func _trigger_pulse() -> void:
 		
 		# Amplify by number of plates
 		var plate_amplification: float = pow(pulse_plate_multiplier, racked_plates_count)
-		var final_strength: float = base_strength * plate_amplification
+		var chaos_mult: float = _get_chaos_multiplier()
+		var final_strength: float = base_strength * plate_amplification * chaos_mult
 		
 		# Apply pulse to angular velocity
 		angular_velocity += pulse_direction * final_strength * get_process_delta_time()
@@ -192,6 +196,16 @@ func block_pulse() -> void:
 func allow_pulse() -> void:
 	can_pulse = true
 	print("Pulses ALLOWED")
+	
+
+
+## Rolls for a chaos multiplier - returns 1.0 normally, or 2-5x sometimes
+func _get_chaos_multiplier() -> float:
+	if randf() < chaos_multiplier_chance:
+		var multiplier: float = randf_range(chaos_multiplier_range.x, chaos_multiplier_range.y)
+		print("⚡ CHAOS MULTIPLIER: %.1fx" % multiplier)
+		return multiplier
+	return 1.0
 
 
 ## Checks if bar has exceeded crash threshold
