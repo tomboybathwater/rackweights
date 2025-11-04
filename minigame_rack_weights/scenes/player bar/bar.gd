@@ -17,11 +17,13 @@ signal bar_crashed()
 @export var rack_pulse_delay: float = 0.75  ## Time from rack to pulse (seconds)
 @export var perfect_rack_pulse_multiplier: float = 3.0  ## Perfect rack pulse strength multiplier
 @export var good_rack_pulse_multiplier: float = 5.0  ## Good rack pulse strength multiplier
+@export var failed_rack_pulse_multiplier: float = 5.0  ## Failed rack pulse strength (same as good by default)
 @export var pulse_min_interval: float = 2.0  ## Minimum seconds between pulses
 @export var pulse_max_interval: float = 5.0  ## Maximum seconds between pulses
 @export var pulse_min_strength: float = 50.0  ## Minimum pulse force
 @export var pulse_max_strength: float = 150.0  ## Maximum pulse force
 @export var pulse_plate_multiplier: float = 1.3  ## Each plate increases pulse strength by 30%
+
 
 @export_group("Center Chaos")
 @export var center_chaos_pulse_frequency: float = 3.0  ## Pulse frequency multiplier at center (3x = 3x more pulses)
@@ -106,6 +108,9 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_G:
 		on_plate_racked(false)  # Simulate good rack
 		print("TEST: Simulated GOOD rack")
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_F:
+		on_plate_failed()  # Simulate failed rack
+		print("TEST: Simulated FAILED rack")
 
 ## Updates the random drift direction
 func _update_drift(delta: float) -> void:
@@ -287,6 +292,28 @@ func on_plate_racked(is_perfect: bool) -> void:
 	var rack_type: String = "PERFECT" if is_perfect else "GOOD"
 	print("✅ Plate racked (%s)! Pulse in %.2fs | Strength: %.1f | Plates: %d" % [rack_type, rack_pulse_delay, rack_pulse_strength, racked_plates_count])
 
+
+## Called when a plate fails to rack (by plate signal)
+func on_plate_failed() -> void:
+	# DO NOT increment racked_plates_count - no credit for failed racks!
+	
+	# Calculate base pulse strength
+	var base_strength: float = randf_range(pulse_min_strength, pulse_max_strength)
+	
+	# Apply failed rack multiplier
+	var quality_multiplier: float = failed_rack_pulse_multiplier
+	
+	# Apply plate count scaling based on CURRENT plates (already racked)
+	var plate_amplification: float = pow(pulse_plate_multiplier, racked_plates_count)
+	
+	# Calculate final strength
+	rack_pulse_strength = base_strength * quality_multiplier * plate_amplification
+	
+	# Set up the pending pulse
+	pending_rack_pulse = true
+	rack_pulse_timer = rack_pulse_delay
+	
+	print("❌ Plate FAILED! Pulse in %.2fs | Strength: %.1f | Plates: %d" % [rack_pulse_delay, rack_pulse_strength, racked_plates_count])
 
 ## Calculates recovery boost based on angle severity and fitness score
 ## Only boosts nudges that push toward center (recovery nudges)
