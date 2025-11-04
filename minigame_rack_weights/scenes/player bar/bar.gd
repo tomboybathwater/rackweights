@@ -17,6 +17,11 @@ signal bar_crashed()
 @export var pulse_min_strength: float = 50.0  ## Minimum pulse force
 @export var pulse_max_strength: float = 150.0  ## Maximum pulse force
 @export var pulse_plate_multiplier: float = 1.3  ## Each plate increases pulse strength by 30%
+
+@export_group("Center Chaos")
+@export var center_chaos_pulse_frequency: float = 3.0  ## Pulse frequency multiplier at center (3x = 3x more pulses)
+@export var center_chaos_multiplier_chance: float = 2.0  ## Chaos chance multiplier at center (2x = double chance)
+@export var center_chaos_nudge_variance: float = 0.3  ## Nudge variance at center (0.3 = +/- 30% random)
 @export var chaos_multiplier_chance: float = 0.15  ## 15% chance for chaos multiplier
 @export var chaos_multiplier_range: Vector2 = Vector2(2.0, 5.0)  ## Random between 2x and 5x
 
@@ -159,15 +164,21 @@ func _nudge(direction: int) -> void:
 	var amplification: float = pow(consecutive_nudge_amplifier, commitment_strength)
 	var chaos_mult: float = _get_chaos_multiplier()
 	var recovery_boost: float = _get_recovery_boost(direction)
-	var final_impulse: float = nudge_impulse * amplification * chaos_mult * recovery_boost
+	
+	# Apply center-based nudge variance
+	var center_factor: float = _get_center_factor()
+	var nudge_variance: float = 1.0 + randf_range(-center_chaos_nudge_variance, center_chaos_nudge_variance) * center_factor
+	
+	var final_impulse: float = nudge_impulse * amplification * chaos_mult * recovery_boost * nudge_variance
 	
 	# Apply impulse to angular velocity
 	angular_velocity += direction * final_impulse * get_process_delta_time()
 	
-	# Debug output
 	var debug_msg: String = "Commitment: %d | Amp: %.2f | Chaos: %.2f" % [nudge_commitment, amplification, chaos_mult]
 	if recovery_boost > 1.0:
 		debug_msg += " | 🛟 Recovery: %.2fx" % recovery_boost
+	if center_factor > 0.5:
+		debug_msg += " | 🎯 Center: %.0f%% | Variance: %.2fx" % [center_factor * 100, nudge_variance]
 	print(debug_msg)
 	
 func _trigger_pulse() -> void:
@@ -189,8 +200,11 @@ func _trigger_pulse() -> void:
 		
 		print("PULSE! Direction: ", pulse_direction, " | Strength: %.1f" % final_strength, " | Plates: ", racked_plates_count)
 	
-	# Reset timer for next pulse
-	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
+	# Reset timer for next pulse, scaled by center factor
+	var center_factor: float = _get_center_factor()
+	var frequency_multiplier: float = 1.0 + (center_factor * (center_chaos_pulse_frequency - 1.0))
+	var scaled_interval: float = randf_range(pulse_min_interval, pulse_max_interval) / frequency_multiplier
+	pulse_timer = scaled_interval
 	
 
 ## Block pulses (called by external signal, e.g., when plate is close)
@@ -224,9 +238,25 @@ func _get_recovery_boost(nudge_direction: int) -> float:
 	return 1.0 + boost_percentage
 
 
-## Rolls for a chaos multiplier - returns 1.0 normally, or 2-5x sometimes
+## Returns how centered the bar is (1.0 = perfectly centered, 0.0 = at gravity threshold or beyond)
+func _get_center_factor() -> float:
+	# Use gravity_threshold as the reference point where chaos bonus goes to 0
+	var abs_angle: float = abs(current_angle)
+	
+	if abs_angle >= gravity_threshold:
+		return 0.0  # No center bonus beyond gravity threshold
+	
+	# Linear interpolation from 1.0 at center to 0.0 at threshold
+	return 1.0 - (abs_angle / gravity_threshold)
+
+
 func _get_chaos_multiplier() -> float:
-	if randf() < chaos_multiplier_chance:
+	# Scale chaos chance based on how centered we are
+	var center_factor: float = _get_center_factor()
+	var chance_multiplier: float = 1.0 + (center_factor * (center_chaos_multiplier_chance - 1.0))
+	var scaled_chance: float = chaos_multiplier_chance * chance_multiplier
+	
+	if randf() < scaled_chance:
 		var multiplier: float = randf_range(chaos_multiplier_range.x, chaos_multiplier_range.y)
 		print("⚡ CHAOS MULTIPLIER: %.1fx" % multiplier)
 		return multiplier
