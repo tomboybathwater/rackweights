@@ -1,14 +1,16 @@
-[gd_scene load_steps=5 format=3 uid="uid://bvra0b2po844c"]
+[gd_scene load_steps=6 format=3 uid="uid://bvra0b2po844c"]
 
 [ext_resource type="Script" uid="uid://8pfcai0pbyoo" path="res://minigame_rack_weights/scenes/bar_test/bar_test.gd" id="1_lw2tm"]
 [ext_resource type="Texture2D" uid="uid://enw7cg54obci" path="res://minigame_rack_weights/assets/layout/rackweights_background.png" id="2_lb45o"]
 [ext_resource type="PackedScene" uid="uid://cgxl7syiy8cvv" path="res://minigame_rack_weights/scenes/player bar/bar.tscn" id="2_pg5a5"]
 [ext_resource type="Texture2D" uid="uid://b4bqg328dcjnr" path="res://minigame_rack_weights/assets/layout/rackweights_foreground.png" id="4_be3i8"]
+[ext_resource type="PackedScene" uid="uid://c36sxa0pg1ivh" path="res://minigame_rack_weights/scenes/plate.tscn" id="5_be3i8"]
 
 [node name="bar_test" type="Node2D"]
 script = ExtResource("1_lw2tm")
 
 [node name="Background" type="Sprite2D" parent="."]
+z_index = -5
 position = Vector2(310, 405)
 texture = ExtResource("2_lb45o")
 
@@ -25,5 +27,9 @@ max_recovery_boost = 0.05
 position = Vector2(310, 405)
 
 [node name="Foreground" type="Sprite2D" parent="."]
+z_index = 5
 position = Vector2(310, 405)
 texture = ExtResource("4_be3i8")
+
+[node name="Plate" parent="." instance=ExtResource("5_be3i8")]
+position = Vector2(304, 34)
