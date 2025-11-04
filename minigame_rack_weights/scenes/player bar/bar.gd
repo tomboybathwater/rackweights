@@ -12,6 +12,11 @@ signal bar_crashed()
 @export var gravity_multiplier: float = 3.0
 @export var max_tilt_angle: float = 45.0
 @export var rotation_damping: float = 0.98
+
+@export_group("Rack Pulses")
+@export var rack_pulse_delay: float = 0.75  ## Time from rack to pulse (seconds)
+@export var perfect_rack_pulse_multiplier: float = 3.0  ## Perfect rack pulse strength multiplier
+@export var good_rack_pulse_multiplier: float = 5.0  ## Good rack pulse strength multiplier
 @export var pulse_min_interval: float = 2.0  ## Minimum seconds between pulses
 @export var pulse_max_interval: float = 5.0  ## Maximum seconds between pulses
 @export var pulse_min_strength: float = 50.0  ## Minimum pulse force
@@ -46,6 +51,10 @@ var drift_change_interval: float = 1.5
 ## Pulse state
 var pulse_timer: float = 0.0
 var can_pulse: bool = true  ## Whether pulses are currently allowed
+## Rack pulse state
+var pending_rack_pulse: bool = false
+var rack_pulse_timer: float = 0.0
+var rack_pulse_strength: float = 0.0
 ## plate state
 var racked_plates_count: int = 0  ## Track number of plates (simulated for now)
 
@@ -64,6 +73,7 @@ func _process(delta: float) -> void:
 	
 	_update_drift(delta)
 	_update_pulse(delta)
+	_update_rack_pulse(delta)
 	_apply_physics(delta)
 	_update_rotation(delta)
 	_check_crash()
@@ -90,6 +100,12 @@ func _input(event: InputEvent) -> void:
 		block_pulse()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_N:
 		allow_pulse()
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_P:
+		on_plate_racked(true)  # Simulate perfect rack
+		print("TEST: Simulated PERFECT rack")
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_G:
+		on_plate_racked(false)  # Simulate good rack
+		print("TEST: Simulated GOOD rack")
 
 ## Updates the random drift direction
 func _update_drift(delta: float) -> void:
@@ -103,6 +119,35 @@ func _randomize_drift() -> void:
 	drift_direction = randf_range(-1.0, 1.0)
 	drift_timer = drift_change_interval
 
+
+## Updates rack pulse timer and triggers when ready
+func _update_rack_pulse(delta: float) -> void:
+	if not pending_rack_pulse:
+		return
+	
+	rack_pulse_timer -= delta
+	if rack_pulse_timer <= 0.0:
+		_trigger_rack_pulse()
+
+
+## Triggers the pending rack pulse
+func _trigger_rack_pulse() -> void:
+	# Determine direction based on current bar orientation
+	var pulse_direction: float = sign(current_angle)
+	if pulse_direction == 0:
+		# If perfectly centered, pick random
+		pulse_direction = 1.0 if randf() > 0.5 else -1.0
+	
+	# Use the stored strength (already calculated with multipliers)
+	var final_strength: float = rack_pulse_strength
+	
+	# Apply pulse
+	angular_velocity += pulse_direction * final_strength * get_process_delta_time()
+	
+	print("💥 RACK PULSE! Direction: ", "RIGHT" if pulse_direction > 0 else "LEFT", " | Strength: %.1f" % final_strength)
+	
+	# Clear pending pulse
+	pending_rack_pulse = false
 
 ## Applies all physics forces to angular velocity
 func _apply_physics(delta: float) -> void:
@@ -217,6 +262,30 @@ func block_pulse() -> void:
 func allow_pulse() -> void:
 	can_pulse = true
 	print("Pulses ALLOWED")
+	
+## Called when a plate successfully racks (by plate signal)
+func on_plate_racked(is_perfect: bool) -> void:
+	# Increment racked plates count
+	racked_plates_count += 1
+	
+	# Calculate base pulse strength
+	var base_strength: float = randf_range(pulse_min_strength, pulse_max_strength)
+	
+	# Apply rack quality multiplier
+	var quality_multiplier: float = perfect_rack_pulse_multiplier if is_perfect else good_rack_pulse_multiplier
+	
+	# Apply plate count scaling (more plates = stronger pulses)
+	var plate_amplification: float = pow(pulse_plate_multiplier, racked_plates_count - 1)  # -1 because we just added this plate
+	
+	# Calculate final strength
+	rack_pulse_strength = base_strength * quality_multiplier * plate_amplification
+	
+	# Set up the pending pulse
+	pending_rack_pulse = true
+	rack_pulse_timer = rack_pulse_delay
+	
+	var rack_type: String = "PERFECT" if is_perfect else "GOOD"
+	print("✅ Plate racked (%s)! Pulse in %.2fs | Strength: %.1f | Plates: %d" % [rack_type, rack_pulse_delay, rack_pulse_strength, racked_plates_count])
 
 
 ## Calculates recovery boost based on angle severity and fitness score
@@ -285,5 +354,8 @@ func reset_bar() -> void:
 	nudge_commitment = 0
 	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
 	can_pulse = true
+	racked_plates_count = 0
+	pending_rack_pulse = false
+	rack_pulse_timer = 0.0
 	_randomize_drift()
 	print("Bar reset")
