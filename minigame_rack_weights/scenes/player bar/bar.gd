@@ -24,6 +24,9 @@ signal bar_crashed()
 @export_group("Player Control")
 @export var nudge_impulse: float = 150.0
 @export var consecutive_nudge_amplifier: float = 1.15  ## Each consecutive nudge is 15% stronger
+@export var max_commitment_strength: int = 10  ## Cap on how much commitment amplifies nudges
+@export var fitness_score: float = 1.0  ## Player skill level (1-10), set by game
+@export var max_recovery_boost: float = 0.02  ## Max boost per fitness point (2% at fitness 10)
 
 ## Internal state
 var current_angle: float = 0.0
@@ -148,20 +151,24 @@ func _nudge(direction: int) -> void:
 	
 	# If nudging in the direction we're already committed to, use full commitment
 	if sign(nudge_commitment) == direction or nudge_commitment == 0:
-		commitment_strength = abs(nudge_commitment)
+		commitment_strength = min(abs(nudge_commitment), max_commitment_strength)
 	# If nudging against our commitment, we're "peeling back" so use 0 (base strength)
 	else:
 		commitment_strength = 0
 	
 	var amplification: float = pow(consecutive_nudge_amplifier, commitment_strength)
 	var chaos_mult: float = _get_chaos_multiplier()
-	var final_impulse: float = nudge_impulse * amplification * chaos_mult
+	var recovery_boost: float = _get_recovery_boost(direction)
+	var final_impulse: float = nudge_impulse * amplification * chaos_mult * recovery_boost
 	
 	# Apply impulse to angular velocity
 	angular_velocity += direction * final_impulse * get_process_delta_time()
 	
 	# Debug output
-	print("Commitment: ", nudge_commitment, " | Strength: ", commitment_strength, " | Amp: %.2f" % amplification)
+	var debug_msg: String = "Commitment: %d | Amp: %.2f | Chaos: %.2f" % [nudge_commitment, amplification, chaos_mult]
+	if recovery_boost > 1.0:
+		debug_msg += " | 🛟 Recovery: %.2fx" % recovery_boost
+	print(debug_msg)
 	
 func _trigger_pulse() -> void:
 	# Only pulse when in the safe zone (not in gravity territory) and when its safe to pulse based on state
@@ -196,7 +203,25 @@ func block_pulse() -> void:
 func allow_pulse() -> void:
 	can_pulse = true
 	print("Pulses ALLOWED")
+
+
+## Calculates recovery boost based on angle severity and fitness score
+## Only boosts nudges that push toward center (recovery nudges)
+func _get_recovery_boost(nudge_direction: int) -> float:
+	# Check if this nudge is a recovery nudge (pushing toward center)
+	var is_recovery: bool = sign(current_angle) != sign(nudge_direction) and current_angle != 0
 	
+	if not is_recovery:
+		return 1.0  # No boost for non-recovery nudges
+	
+	# Calculate how severe the tilt is (0.0 = centered, 1.0 = at crash threshold)
+	var angle_severity: float = abs(current_angle) / max_tilt_angle
+	
+	# Calculate boost: severity * max_boost_per_point * fitness_score
+	var boost_percentage: float = angle_severity * max_recovery_boost * fitness_score
+	
+	# Return as multiplier (e.g., 0.15 = 15% boost = 1.15x multiplier)
+	return 1.0 + boost_percentage
 
 
 ## Rolls for a chaos multiplier - returns 1.0 normally, or 2-5x sometimes
