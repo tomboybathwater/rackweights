@@ -10,7 +10,9 @@ height = 266.0
 
 [node name="Plate" type="Node2D"]
 script = ExtResource("1_ysojq")
-slide_duration = 1.0
+countdown_tick_duration = 1.0
+spawn_offset_y = -300.0
+stop_offset_y = 0.0
 
 [node name="DetectionZone" type="Area2D" parent="."]
 position = Vector2(0, -4)
@@ -37,9 +39,9 @@ texture = ExtResource("2_ysojq")
 
 [node name="CountdownLabel" type="Label" parent="."]
 offset_left = -203.0
-offset_top = -35.0
+offset_top = 43.0
 offset_right = -151.0
-offset_bottom = 34.0
+offset_bottom = 112.0
 theme_override_font_sizes/font_size = 50
 text = "0"
 horizontal_alignment = 1

@@ -25,6 +25,7 @@ signal fell_out_of_bounds(plate: Plate)
 @export_group("Spawn/Stop Positions")
 @export var spawn_offset_y: float = -200.0  ## How far above screen to spawn
 @export var stop_offset_y: float = -100.0  ## Where to stop for countdown
+@export var spawn_slide_time: float = 0.75
 
 ## State
 enum State { SLIDING_IN, COUNTING, DROPPING, RACKED, FAILED }
@@ -82,7 +83,7 @@ func _slide_to_countdown_position() -> void:
 	
 	var target_pos: Vector2 = Vector2(global_position.x, stop_offset_y)
 	var tween: Tween = create_tween()
-	tween.tween_property(self, "global_position", target_pos, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(self, "global_position", target_pos, spawn_slide_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tween.finished.connect(_start_countdown)
 
 
