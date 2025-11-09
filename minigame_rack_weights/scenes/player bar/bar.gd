@@ -45,7 +45,8 @@ signal bar_crashed()
 @export var max_recovery_boost: float = 0.02  ## Max boost per fitness point (2% at fitness 10)
 
 @export_group("Resting Weights")
-@export var weight_rest_point_offset: float = -75.0
+@export var weight_rest_point_offset: float = -75.0 ## where on the bar sprite the first weight sits
+@export var weight_rest_gap_offset: float = 30.0 ## how far above the last weight the next weight sits
 
 ## Internal state
 var current_angle: float = 0.0
@@ -356,7 +357,7 @@ func _handle_perfect_rack(plate: Plate) -> void:
 	print("✨ CHOICE RACK!")
 	
 	# Calculate rest position for this plate (stack them)
-	var rest_y: float = weight_rest_point_offset - (racked_plates_count * 20.0)  # Stack plates 20 units apart
+	var rest_y: float = weight_rest_point_offset - (racked_plates_count * weight_rest_gap_offset)  # Stack plates 20 units apart
 	
 	# Tell plate to rack on bar
 	plate.rack_on_bar(pivot_point, rest_y)
@@ -374,7 +375,7 @@ func _handle_good_rack(plate: Plate) -> void:
 	print("✅ NICE RACK")
 	
 	# Calculate rest position for this plate
-	var rest_y: float = weight_rest_point_offset - (racked_plates_count * 20.0)
+	var rest_y: float = weight_rest_point_offset - (racked_plates_count * weight_rest_gap_offset)
 	
 	# Tell plate to rack on bar
 	plate.rack_on_bar(pivot_point, rest_y)
