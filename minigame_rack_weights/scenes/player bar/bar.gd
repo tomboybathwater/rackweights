@@ -5,6 +5,10 @@ class_name Bar
 signal tilt_angle_changed(angle: float)
 signal bar_crashed()
 
+@export_group("Rack Angle Thresholds")
+@export var perfect_angle_threshold: float = 5.0  ## Bar must be within ±5° for perfect
+@export var good_angle_threshold: float = 15.0  ## Bar must be within ±15° for good
+
 ## Exported tuning parameters - Bar Physics
 @export_group("Bar Physics")
 @export var base_drift_force: float = 2.0
@@ -62,11 +66,13 @@ var racked_plates_count: int = 0  ## Track number of plates (simulated for now)
 
 ## Node references
 @onready var pivot_point: Marker2D = $PivotPoint
+@onready var tip_collision: Area2D = $PivotPoint/TipCollision
 
 
 func _ready() -> void:
 	_randomize_drift()
 	pulse_timer = randf_range(pulse_min_interval, pulse_max_interval)
+	tip_collision.area_entered.connect(_on_tip_collision_area_entered)
 
 
 func _process(delta: float) -> void:
@@ -314,6 +320,94 @@ func on_plate_failed() -> void:
 	rack_pulse_timer = rack_pulse_delay
 	
 	print("❌ Plate FAILED! Pulse in %.2fs | Strength: %.1f | Plates: %d" % [rack_pulse_delay, rack_pulse_strength, racked_plates_count])
+
+## Called when bar tip enters a plate's detection zone
+func _on_tip_collision_area_entered(area: Area2D) -> void:
+	# Get the plate node (area's parent should be the Plate)
+	var plate: Plate = area.get_parent()
+	
+	if plate == null or not plate is Plate:
+		return  # Not a plate, ignore
+	
+	# Only check plates that are in DROPPING state
+	if plate.current_state != Plate.State.DROPPING:
+		return
+	
+	# Check rack quality based on current bar angle
+	var rack_quality: String = plate.check_rack_attempt(current_angle, perfect_angle_threshold, good_angle_threshold)
+	
+	print("🎯 Bar tip touched plate! Quality: ", rack_quality.to_upper())
+	
+	# Handle based on quality
+	match rack_quality:
+		"perfect":
+			_handle_perfect_rack(plate)
+		"good":
+			_handle_good_rack(plate)
+		"fail":
+			_handle_failed_rack(plate)
+
+
+## Handle a perfect rack
+func _handle_perfect_rack(plate: Plate) -> void:
+	print("✨ CHOICE RACK!")
+	
+	# Calculate rest position for this plate (stack them)
+	var rest_y: float = -50.0 - (racked_plates_count * 20.0)  # Stack plates 20 units apart
+	
+	# Tell plate to rack on bar
+	plate.rack_on_bar(pivot_point, rest_y)
+	
+	# Trigger bar's rack pulse system
+	on_plate_racked(true)  # true = perfect
+	
+	# Allow pulses again (plate has landed)
+	allow_pulse()
+	
+	# Notify spawner that plate is resolved
+	get_tree().call_group("plate_spawner", "on_plate_resolved")
+
+
+## Handle a good rack
+func _handle_good_rack(plate: Plate) -> void:
+	print("✅ NICE RACK")
+	
+	# Calculate rest position for this plate
+	var rest_y: float = -50.0 - (racked_plates_count * 20.0)
+	
+	# Tell plate to rack on bar
+	plate.rack_on_bar(pivot_point, rest_y)
+	
+	# Trigger bar's rack pulse system
+	on_plate_racked(false)  # false = good (not perfect)
+	
+	# Allow pulses again
+	allow_pulse()
+	
+	# Notify spawner that plate is resolved
+	get_tree().call_group("plate_spawner", "on_plate_resolved")
+
+
+## Handle a failed rack
+func _handle_failed_rack(plate: Plate) -> void:
+	print("💥 FAILED RACK!")
+	
+	# Tell plate to flip and fall
+	plate.fail_and_fall(sign(current_angle))
+	
+	# Trigger bar's failed pulse system
+	on_plate_failed()
+	
+	# Allow pulses again
+	allow_pulse()
+	
+	# Notify spawner that plate is resolved
+	get_tree().call_group("plate_spawner", "on_plate_resolved")
+	
+	# Optional: screen shake and sound would go here
+	modulate = Color.RED
+	await get_tree().create_timer(0.2).timeout
+	modulate = Color.WHITE
 
 ## Calculates recovery boost based on angle severity and fitness score
 ## Only boosts nudges that push toward center (recovery nudges)

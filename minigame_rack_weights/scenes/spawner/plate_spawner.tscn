@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dkdpcjl4y34ct"]
+
+[ext_resource type="Script" uid="uid://cwv73r4gkeswj" path="res://minigame_rack_weights/scenes/spawner/plate_spawner.gd" id="1_l1ied"]
+
+[node name="PlateSpawner" type="Node2D"]
+script = ExtResource("1_l1ied")
+
+[node name="SpawnPosition" type="Marker2D" parent="."]

@@ -10,6 +10,7 @@ height = 266.0
 
 [node name="Plate" type="Node2D"]
 script = ExtResource("1_ysojq")
+slide_duration = 1.0
 
 [node name="DetectionZone" type="Area2D" parent="."]
 position = Vector2(0, -4)
@@ -29,7 +30,7 @@ z_index = -1
 position = Vector2(-6, 11.5)
 texture = ExtResource("1_k0efy")
 
-[node name="PlateBackforeground" type="Sprite2D" parent="PlateVisuals"]
+[node name="PlateForeground" type="Sprite2D" parent="PlateVisuals"]
 z_index = 1
 position = Vector2(-6, 11.5)
 texture = ExtResource("2_ysojq")

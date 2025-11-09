@@ -5,10 +5,7 @@ class_name Plate
 signal rack_attempted(plate: Plate, bar_angle: float)
 signal fell_out_of_bounds(plate: Plate)
 
-## Exported variables
-@export_group("Plate Properties")
-@export var countdown_value: int = 3  ## 3, 4, or 5
-@export_enum("Slow", "Medium", "Fast") var drop_speed: int = 0  ## Speed tier
+@export var plate_type: PlateType  ## Assign a PlateType resource
 
 @export_group("Speed Configuration")
 @export var slow_drop_duration: float = 3.0  ## Seconds for slow drop
@@ -49,14 +46,33 @@ func _ready() -> void:
 	# We'll set target position when spawned by spawner
 	pass
 
+## Apply a PlateType resource to this plate
+func apply_plate_type(type: PlateType) -> void:
+	if type == null:
+		push_error("Plate: No PlateType provided!")
+		return
+	
+	plate_type = type
+	
+	# Apply visual
+	if type.background_sprite:
+		$PlateVisuals/PlateBackground.texture = type.background_sprite
+	if type.foreground_sprite:
+		$PlateVisuals/PlateForeground.texture = type.foreground_sprite
+	
+	# Apply properties (these will be read when sequence starts)
+	# We'll use plate_type.countdown_value and plate_type.drop_speed in the drop logic
 
 ## Initialize and start the plate sequence
 func start_sequence(screen_center_x: float, drop_target_y: float) -> void:
-	# Position at spawn point
-	position = Vector2(screen_center_x, spawn_offset_y)
+	if plate_type == null:
+		push_error("Plate: start_sequence called but no plate_type set!")
+		return
+	
+	# Set absolute spawn position (above screen at spawner's X position)
+	global_position = Vector2(screen_center_x, spawn_offset_y)
 	target_drop_y = drop_target_y
 	
-	# Start sliding in
 	_slide_to_countdown_position()
 
 
@@ -64,9 +80,9 @@ func start_sequence(screen_center_x: float, drop_target_y: float) -> void:
 func _slide_to_countdown_position() -> void:
 	current_state = State.SLIDING_IN
 	
-	var target_pos: Vector2 = Vector2(position.x, stop_offset_y)
+	var target_pos: Vector2 = Vector2(global_position.x, stop_offset_y)
 	var tween: Tween = create_tween()
-	tween.tween_property(self, "position", target_pos, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(self, "global_position", target_pos, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tween.finished.connect(_start_countdown)
 
 
@@ -74,7 +90,7 @@ func _slide_to_countdown_position() -> void:
 func _start_countdown() -> void:
 	current_state = State.COUNTING
 	countdown_label.visible = true
-	_show_countdown_number(countdown_value)
+	_show_countdown_number(plate_type.countdown_value)
 
 
 ## Show a countdown number with fade
@@ -100,16 +116,16 @@ func _start_drop() -> void:
 	
 	# Get drop duration based on speed
 	var duration: float
-	match drop_speed:
+	match plate_type.drop_speed:
 		0: duration = slow_drop_duration
 		1: duration = medium_drop_duration
 		2: duration = fast_drop_duration
 		_: duration = medium_drop_duration
 	
-	# Drop to target
-	var target_pos: Vector2 = Vector2(position.x, target_drop_y)
+	# Drop to target using global position
+	var target_pos: Vector2 = Vector2(global_position.x, target_drop_y)
 	var tween: Tween = create_tween()
-	tween.tween_property(self, "position", target_pos, duration).set_ease(drop_ease_type).set_trans(drop_trans_type)
+	tween.tween_property(self, "global_position", target_pos, duration).set_ease(drop_ease_type).set_trans(drop_trans_type)
 	tween.finished.connect(_on_drop_finished)
 
 

@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://bvra0b2po844c"]
+[gd_scene load_steps=9 format=3 uid="uid://bvra0b2po844c"]
 
 [ext_resource type="Script" uid="uid://8pfcai0pbyoo" path="res://minigame_rack_weights/scenes/bar_test/bar_test.gd" id="1_lw2tm"]
 [ext_resource type="Texture2D" uid="uid://enw7cg54obci" path="res://minigame_rack_weights/assets/layout/rackweights_background.png" id="2_lb45o"]
 [ext_resource type="PackedScene" uid="uid://cgxl7syiy8cvv" path="res://minigame_rack_weights/scenes/player bar/bar.tscn" id="2_pg5a5"]
 [ext_resource type="Texture2D" uid="uid://b4bqg328dcjnr" path="res://minigame_rack_weights/assets/layout/rackweights_foreground.png" id="4_be3i8"]
-[ext_resource type="PackedScene" uid="uid://c36sxa0pg1ivh" path="res://minigame_rack_weights/scenes/plate.tscn" id="5_be3i8"]
+[ext_resource type="PackedScene" uid="uid://dkdpcjl4y34ct" path="res://minigame_rack_weights/scenes/spawner/plate_spawner.tscn" id="5_be3i8"]
+[ext_resource type="PackedScene" uid="uid://c36sxa0pg1ivh" path="res://minigame_rack_weights/scenes/plate/plate.tscn" id="6_hu0py"]
+[ext_resource type="Script" uid="uid://cddpsa5uev8ny" path="res://minigame_rack_weights/scenes/plate/plate_type.gd" id="7_62i1l"]
+[ext_resource type="Resource" uid="uid://bp81pkg1wufgl" path="res://minigame_rack_weights/scenes/plate/plate_types/default_plate.tres" id="8_wvhbe"]
 
 [node name="bar_test" type="Node2D"]
 script = ExtResource("1_lw2tm")
@@ -31,5 +34,8 @@ z_index = 5
 position = Vector2(310, 405)
 texture = ExtResource("4_be3i8")
 
-[node name="Plate" parent="." instance=ExtResource("5_be3i8")]
-position = Vector2(304, 34)
+[node name="PlateSpawner" parent="." instance=ExtResource("5_be3i8")]
+position = Vector2(310, 0)
+plate_scene = ExtResource("6_hu0py")
+available_plate_types = Array[ExtResource("7_62i1l")]([ExtResource("8_wvhbe")])
+drop_target_y = 810.0
