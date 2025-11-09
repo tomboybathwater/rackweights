@@ -337,6 +337,10 @@ func _on_tip_collision_area_entered(area: Area2D) -> void:
 	if plate.current_state != Plate.State.DROPPING:
 		return
 	
+	# Immediately disable collision to prevent multiple triggers
+	area.set_deferred("monitoring", false)
+	area.set_deferred("monitorable", false)
+	
 	# Check rack quality based on current bar angle
 	var rack_quality: String = plate.check_rack_attempt(current_angle, perfect_angle_threshold, good_angle_threshold)
 	

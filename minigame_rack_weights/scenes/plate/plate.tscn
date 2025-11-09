@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c36sxa0pg1ivh"]
+[gd_scene load_steps=6 format=3 uid="uid://c36sxa0pg1ivh"]
 
 [ext_resource type="Texture2D" uid="uid://c0tw2ngd7fkwa" path="res://minigame_rack_weights/assets/sprites/plate_default_back.png" id="1_k0efy"]
 [ext_resource type="Script" uid="uid://daed4f3klxn21" path="res://minigame_rack_weights/scenes/plate/plate.gd" id="1_ysojq"]
 [ext_resource type="Texture2D" uid="uid://b6xirllpykqra" path="res://minigame_rack_weights/assets/sprites/plate_default_front.png" id="2_ysojq"]
+[ext_resource type="AudioStream" uid="uid://cwccmdgsj2x55" path="res://minigame_rack_weights/assets/sfx/weight_rack_slide_short.wav" id="4_xvyes"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_3skks"]
 radius = 20.0
@@ -46,3 +47,6 @@ theme_override_font_sizes/font_size = 50
 text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_xvyes")

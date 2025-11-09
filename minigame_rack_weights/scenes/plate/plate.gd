@@ -35,6 +35,12 @@ var current_state: State = State.SLIDING_IN
 @onready var visuals: CanvasGroup = $PlateVisuals
 @onready var countdown_label: Label = $CountdownLabel
 @onready var detection_zone: Area2D = $DetectionZone
+@onready var sound_player: AudioStreamPlayer2D = $AudioStreamPlayer2D
+
+## Preload Assets
+@onready var sound_rack_slide:= preload("res://minigame_rack_weights/assets/sfx/weight_rack_slide_short.wav")
+@onready var sound_rack_hit:= preload("res://minigame_rack_weights/assets/sfx/weight_rack_hit.wav")
+
 
 ## Internal
 var target_drop_y: float = 0.0  ## Where plate should drop to
@@ -169,6 +175,8 @@ func rack_on_bar(bar_node: Node2D, rest_position_y: float) -> void:
 	# Parent to bar so we follow its rotation (deferred to avoid physics conflicts)
 	var old_global_pos: Vector2 = global_position
 	call_deferred("_reparent_to_bar", bar_node, old_global_pos, rest_position_y)
+	sound_player.stream = sound_rack_slide
+	sound_player.play()
 	
 	# Slide to rest position (local to bar)
 	var target_pos: Vector2 = Vector2(0, rest_position_y)
@@ -195,6 +203,9 @@ func _reparent_to_bar(bar_node: Node2D, old_pos: Vector2, rest_y: float) -> void
 ## Failed rack - flip and fall
 func fail_and_fall(bar_tilt_direction: float) -> void:
 	current_state = State.FAILED
+	
+	sound_player.stream = sound_rack_hit
+	sound_player.play()
 	
 	# Apply rotation based on bar direction
 	var flip_rotation: float = 180.0 if bar_tilt_direction > 0 else -180.0

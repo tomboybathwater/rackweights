@@ -113,15 +113,12 @@ func _on_plate_rack_attempted(plate: Plate, bar_angle: float) -> void:
 ## Called when plate falls out of bounds
 func _on_plate_fell_out(plate: Plate) -> void:
 	print("⬇️ Plate fell out of bounds")
-	can_spawn_next = true
-	_spawn_next_plate()
 
 
 ## Called externally when plate successfully racks or fails
 func on_plate_resolved() -> void:
-	print("last plate resolved, up next")
 	can_spawn_next = true
-	_spawn_next_plate()
+	call_deferred("_spawn_next_plate")
 
 
 ## Reset spawner for new game
