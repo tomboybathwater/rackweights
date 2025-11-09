@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PlateType" load_steps=4 format=3 uid="uid://b216msyya2ctr"]
+
+[ext_resource type="Texture2D" uid="uid://dj5qtgft1k24o" path="res://minigame_rack_weights/assets/sprites/plate_tire_back.png" id="1_tibr5"]
+[ext_resource type="Script" uid="uid://cddpsa5uev8ny" path="res://minigame_rack_weights/scenes/plate/plate_type.gd" id="1_uyjdf"]
+[ext_resource type="Texture2D" uid="uid://c15g1g0lgw3v7" path="res://minigame_rack_weights/assets/sprites/plate_tire_front.png" id="2_n2wyh"]
+
+[resource]
+script = ExtResource("1_uyjdf")
+background_sprite = ExtResource("1_tibr5")
+foreground_sprite = ExtResource("2_n2wyh")
+icon_sprite = ExtResource("1_tibr5")
+countdown_value = 2
+drop_speed = 0
+metadata/_custom_type_script = "uid://cddpsa5uev8ny"

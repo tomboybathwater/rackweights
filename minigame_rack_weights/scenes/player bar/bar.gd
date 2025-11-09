@@ -44,6 +44,9 @@ signal bar_crashed()
 @export var fitness_score: float = 1.0  ## Player skill level (1-10), set by game
 @export var max_recovery_boost: float = 0.02  ## Max boost per fitness point (2% at fitness 10)
 
+@export_group("Resting Weights")
+@export var weight_rest_point_offset: float = -75.0
+
 ## Internal state
 var current_angle: float = 0.0
 var angular_velocity: float = 0.0
@@ -353,7 +356,7 @@ func _handle_perfect_rack(plate: Plate) -> void:
 	print("✨ CHOICE RACK!")
 	
 	# Calculate rest position for this plate (stack them)
-	var rest_y: float = -50.0 - (racked_plates_count * 20.0)  # Stack plates 20 units apart
+	var rest_y: float = weight_rest_point_offset - (racked_plates_count * 20.0)  # Stack plates 20 units apart
 	
 	# Tell plate to rack on bar
 	plate.rack_on_bar(pivot_point, rest_y)
@@ -364,8 +367,6 @@ func _handle_perfect_rack(plate: Plate) -> void:
 	# Allow pulses again (plate has landed)
 	allow_pulse()
 	
-	# Notify spawner that plate is resolved
-	get_tree().call_group("plate_spawner", "on_plate_resolved")
 
 
 ## Handle a good rack
@@ -373,7 +374,7 @@ func _handle_good_rack(plate: Plate) -> void:
 	print("✅ NICE RACK")
 	
 	# Calculate rest position for this plate
-	var rest_y: float = -50.0 - (racked_plates_count * 20.0)
+	var rest_y: float = weight_rest_point_offset - (racked_plates_count * 20.0)
 	
 	# Tell plate to rack on bar
 	plate.rack_on_bar(pivot_point, rest_y)
@@ -383,9 +384,7 @@ func _handle_good_rack(plate: Plate) -> void:
 	
 	# Allow pulses again
 	allow_pulse()
-	
-	# Notify spawner that plate is resolved
-	get_tree().call_group("plate_spawner", "on_plate_resolved")
+
 
 
 ## Handle a failed rack

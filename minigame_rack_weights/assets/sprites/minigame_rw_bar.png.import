@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b6xirllpykqra"
-path="res://.godot/imported/plate_default_front.png-2c2dcb71cf41051497739c21d3220415.ctex"
+uid="uid://t0cqprguttdp"
+path="res://.godot/imported/minigame_rw_bar.png-13a2e50dcea1d5c51a2f83edc5a2263d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://minigame_rack_weights/assets/plate_default_front.png"
-dest_files=["res://.godot/imported/plate_default_front.png-2c2dcb71cf41051497739c21d3220415.ctex"]
+source_file="res://minigame_rack_weights/assets/sprites/minigame_rw_bar.png"
+dest_files=["res://.godot/imported/minigame_rw_bar.png-13a2e50dcea1d5c51a2f83edc5a2263d.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://t0cqprguttdp"
-path="res://.godot/imported/minigame_rw_bar.png-39fd96a13e44889cd022f61f9f59e5a5.ctex"
+uid="uid://c15g1g0lgw3v7"
+path="res://.godot/imported/plate_tire_front.png-4fec7f8f1d2abbdf8d1426dd23b83f3a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://minigame_rack_weights/assets/minigame_rw_bar.png"
-dest_files=["res://.godot/imported/minigame_rw_bar.png-39fd96a13e44889cd022f61f9f59e5a5.ctex"]
+source_file="res://minigame_rack_weights/assets/sprites/plate_tire_front.png"
+dest_files=["res://.godot/imported/plate_tire_front.png-4fec7f8f1d2abbdf8d1426dd23b83f3a.ctex"]
 
 [params]
 

@@ -1,13 +1,14 @@
 [gd_scene load_steps=4 format=3 uid="uid://cgxl7syiy8cvv"]
 
 [ext_resource type="Script" uid="uid://ce1aupuxre70c" path="res://minigame_rack_weights/scenes/player bar/bar.gd" id="1_0lgiu"]
-[ext_resource type="Texture2D" uid="uid://t0cqprguttdp" path="res://minigame_rack_weights/assets/minigame_rw_bar.png" id="1_2axuc"]
+[ext_resource type="Texture2D" uid="uid://t0cqprguttdp" path="res://minigame_rack_weights/assets/sprites/minigame_rw_bar.png" id="1_2axuc"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0lgiu"]
 size = Vector2(30, 40)
 
 [node name="Bar" type="Node2D"]
 script = ExtResource("1_0lgiu")
+weight_rest_point_offset = -80.0
 
 [node name="PivotPoint" type="Marker2D" parent="."]
 

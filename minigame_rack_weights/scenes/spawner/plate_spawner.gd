@@ -119,6 +119,7 @@ func _on_plate_fell_out(plate: Plate) -> void:
 
 ## Called externally when plate successfully racks or fails
 func on_plate_resolved() -> void:
+	print("last plate resolved, up next")
 	can_spawn_next = true
 	_spawn_next_plate()
 
@@ -130,3 +131,4 @@ func reset_spawner() -> void:
 	if current_plate != null and is_instance_valid(current_plate):
 		current_plate.queue_free()
 	current_plate = null
+"res://minigame_rack_weights/assets/sprites/plate_tire_back.png"

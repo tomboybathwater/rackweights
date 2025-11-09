@@ -132,6 +132,10 @@ func _start_drop() -> void:
 
 ## Called when drop tween finishes (fell past bar without catching)
 func _on_drop_finished() -> void:
+	# Only emit/free if we're still in DROPPING state (not racked)
+	if current_state == State.DROPPING:
+		fell_out_of_bounds.emit(self)
+		queue_free()
 	fell_out_of_bounds.emit(self)
 	queue_free()
 
@@ -152,17 +156,41 @@ func check_rack_attempt(bar_angle: float, perfect_threshold: float, good_thresho
 func rack_on_bar(bar_node: Node2D, rest_position_y: float) -> void:
 	current_state = State.RACKED
 	
-	# Parent to bar so we follow its rotation
+	# Stop any ongoing tweens (drop, slide-in, etc)
+	var active_tweens = get_tree().get_processed_tweens()
+	for tween in active_tweens:
+		if tween.is_valid():
+			tween.kill()
+	
+	# Disable collision detection (we're racked now)
+	detection_zone.set_deferred("monitoring", false)
+	detection_zone.set_deferred("monitorable", false)
+	
+	# Parent to bar so we follow its rotation (deferred to avoid physics conflicts)
 	var old_global_pos: Vector2 = global_position
-	get_parent().remove_child(self)
-	bar_node.add_child(self)
-	global_position = old_global_pos
+	call_deferred("_reparent_to_bar", bar_node, old_global_pos, rest_position_y)
 	
 	# Slide to rest position (local to bar)
 	var target_pos: Vector2 = Vector2(0, rest_position_y)
 	var tween: Tween = create_tween()
 	tween.tween_property(self, "position", target_pos, slide_duration).set_ease(slide_ease_type).set_trans(slide_trans_type)
 
+
+## Helper to reparent plate during physics callback
+func _reparent_to_bar(bar_node: Node2D, old_pos: Vector2, rest_y: float) -> void:
+	get_parent().remove_child(self)
+	bar_node.add_child(self)
+	global_position = old_pos
+	
+	# Slide to rest position (local to bar)
+	var target_pos: Vector2 = Vector2(0, rest_y)
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "position", target_pos, slide_duration).set_ease(slide_ease_type).set_trans(slide_trans_type)
+	
+	# Notify spawner when slide finishes
+	tween.finished.connect(func():
+		get_tree().call_group("plate_spawner", "on_plate_resolved")
+	)
 
 ## Failed rack - flip and fall
 func fail_and_fall(bar_tilt_direction: float) -> void:

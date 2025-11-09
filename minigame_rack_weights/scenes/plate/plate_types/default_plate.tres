@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="PlateType" load_steps=4 format=3 uid="uid://bp81pkg1wufgl"]
 
-[ext_resource type="Texture2D" uid="uid://c0tw2ngd7fkwa" path="res://minigame_rack_weights/assets/plate_default_back.png" id="1_41t72"]
+[ext_resource type="Texture2D" uid="uid://c0tw2ngd7fkwa" path="res://minigame_rack_weights/assets/sprites/plate_default_back.png" id="1_41t72"]
 [ext_resource type="Script" uid="uid://cddpsa5uev8ny" path="res://minigame_rack_weights/scenes/plate/plate_type.gd" id="1_qnfxe"]
-[ext_resource type="Texture2D" uid="uid://b6xirllpykqra" path="res://minigame_rack_weights/assets/plate_default_front.png" id="2_svoct"]
+[ext_resource type="Texture2D" uid="uid://b6xirllpykqra" path="res://minigame_rack_weights/assets/sprites/plate_default_front.png" id="2_svoct"]
 
 [resource]
 script = ExtResource("1_qnfxe")
